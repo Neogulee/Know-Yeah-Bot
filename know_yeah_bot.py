@@ -2,6 +2,7 @@ import discord
 import requests
 import json
 from bs4 import BeautifulSoup
+import re
 
 
 token = ""
@@ -87,6 +88,20 @@ def init_command_manager():
         return "%s번: %s - %s %s" % (args[0], problem["title"], color, tier)\
             + '\n' + "https://www.acmicpc.net/problem/%s" % args[0]
     command_manager.add_command(Command(["문제", "problem"], ["number"], problem_operation))
+
+    def codeforces_notification():
+        url = "https://codeforces.com/contests"
+        html = requests.get(url)
+        bs_object = BeautifulSoup(html.text, "html.parser")
+
+        contests = bs_object.find(href=re.compile("/contests/")).contents
+        if len(contests) == 0:
+            return None
+
+        title = contests[0]
+        before_start = bs_object.find("span", class_="countdown").contents[0]
+        return title + '\n' + "Before Start: " + before_start
+    command_manager.add_command(Command(["코포", "코드포스", "codeforces"], [], codeforces_notification))
 
 
 init_command_manager()

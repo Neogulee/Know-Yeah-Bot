@@ -144,6 +144,9 @@ async def on_message(message):
                 detected_word = word
                 cnt += 1
 
+        if detected_word is not None:
+            await message.channel.send("?" * cnt)
+
         agree_words = ["변태", "굇수"]
         detected_word = None
         for word in agree_words:

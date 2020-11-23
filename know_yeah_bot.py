@@ -161,6 +161,7 @@ async def on_message(message):
 
         if detected_word is not None:
             await message.channel.send("?" * cnt)
+            return
 
         agree_words = ["변태", "굇수"]
         detected_word = None
@@ -171,6 +172,7 @@ async def on_message(message):
 
         if detected_word is not None:
             await message.channel.send("ㅇㅈ")
-        return
+            return
+
 
 client.run(token)

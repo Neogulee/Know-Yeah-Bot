@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 import re
 
 
-token = ""
+token = open("token.txt", "r").readline()
 prefix = '!'
-colors = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Ruby", "Unrated"]
+colors = ["bronze", "silver", "gold", "platinum", "diamond", "ruby", "unranked"]
 
 
 class Command:
@@ -62,6 +62,7 @@ class CommandManager:
         return ret
 
 
+emoji_name2id = {}
 client = discord.Client()
 command_manager = CommandManager()
 
@@ -70,10 +71,11 @@ def init_command_manager():
     command_manager.add_command(Command(["명령어", "commands"], [], command_manager.get_commands))
 
     def problem_operation(args):
-        if not args[0].isdigit():
+        number = args[0]
+        if not number.isdigit():
             return None
 
-        url = "https://solved.ac/search?query=%s" % args[0]
+        url = "https://solved.ac/search?query=%s" % number
         request = requests.get(url)
         bs_object = BeautifulSoup(request.text, "html.parser")
 
@@ -85,8 +87,11 @@ def init_command_manager():
         level = problem["level"] - 1
         color = colors[int(level / 5)] if level >= 0 else colors[-1]
         tier = str(5 - level % 5) if level >= 0 else ''
-        return "%s번: %s - %s %s" % (args[0], problem["title"], color, tier)\
-            + '\n' + "https://www.acmicpc.net/problem/%s" % args[0]
+        emoji_name = "%s%s" % (color, tier)
+
+        return "%s번: %s <:%s:%d>" % (number, problem["title"], emoji_name, emoji_name2id[emoji_name])\
+            + '\n' + "https://www.acmicpc.net/problem/%s" % number
+
     command_manager.add_command(Command(["문제", "problem"], ["number"], problem_operation))
 
     def codeforces_notification():
@@ -112,7 +117,11 @@ async def on_ready():
     print("Logged in as")
     print(client.user.name)
     print(client.user.id)
-    print("------")
+    print("----------------")
+
+    emoji_list = client.emojis
+    for emoji in emoji_list:
+        emoji_name2id[emoji.name] = emoji.id
 
 
 @client.event

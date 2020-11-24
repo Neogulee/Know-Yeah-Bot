@@ -8,6 +8,7 @@ import re
 token = open("token.txt", "r").readline()
 prefix = '!'
 colors = ["bronze", "silver", "gold", "platinum", "diamond", "ruby", "unranked"]
+discord_colors = [0xad5600, 0x435f7a, 0xec9a00, 0x27e2a4, 0x00b4fc, 0xff0062, 0x2d2d2d]
 
 
 class Command:
@@ -59,7 +60,7 @@ class CommandManager:
             ret += str(self.__commands[i])
             if i != len(self.__commands) - 1:
                 ret += ", "
-        return ret
+        return ret, None
 
 
 emoji_name2id = {}
@@ -85,12 +86,14 @@ def init_command_manager():
 
         problem = problems[0]
         level = problem["level"] - 1
-        color = colors[int(level / 5)] if level >= 0 else colors[-1]
+        color_value = int(level / 5) if level >= 0 else 6
         tier = str(5 - level % 5) if level >= 0 else ''
+        color = colors[color_value]
         emoji_name = "%s%s" % (color, tier)
 
-        return "%s번: %s <:%s:%d>" % (number, problem["title"], emoji_name, emoji_name2id[emoji_name])\
-            + '\n' + "https://www.acmicpc.net/problem/%s" % number
+        return (None, discord.Embed(title="%s번: %s <:%s:%d>" % (number, problem["title"], emoji_name, emoji_name2id[emoji_name]),
+                                    description="https://www.acmicpc.net/problem/%s" % number,
+                                    color=discord_colors[color_value]))
 
     command_manager.add_command(Command(["문제", "problem"], ["number"], problem_operation))
 
@@ -105,7 +108,7 @@ def init_command_manager():
 
         title = contests[0]
         before_start = bs_object.find("span", class_="countdown").contents[0]
-        return title + '\n' + "Before Start: " + before_start
+        return (title + '\n' + "Before Start: " + before_start), None
     command_manager.add_command(Command(["코포", "코드포스", "codeforces"], [], codeforces_notification))
 
 
@@ -141,10 +144,14 @@ async def on_message(message):
 
         sending_msg = command_manager.run(cmd, args)
         if sending_msg is not None:
-            await message.channel.send(sending_msg)
+            msg, embed = sending_msg
+            if msg is not None:
+                await message.channel.send(msg)
+            if embed is not None:
+                await message.channel.send(embed=embed)
 
     else:  # prefixless commands
-        for word in ["너구리" "Neogulee"]:
+        for word in ["너구리", "Neogulee"]:
             if word in message.content:
                 return
 
